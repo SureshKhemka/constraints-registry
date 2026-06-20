@@ -1,0 +1,12 @@
+# Deliberately malformed (VH-IMPORT-2): invalid category enum, invalid severity
+# enum, and non-semver version. Must be rejected with per-field errors while the
+# valid constraints in source-a and source-b still import (FR-CONSTRAINT-2, NFR-2).
+id: broken.one
+title: "Deliberately malformed constraint"
+intent: "Used by the harness to prove malformed-constraint isolation."
+category: infra
+severity: critical
+guidance:
+  example_compliant: "ok"
+owner: team-b
+version: "1.0"

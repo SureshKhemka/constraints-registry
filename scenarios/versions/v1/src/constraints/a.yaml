@@ -1,0 +1,9 @@
+id: ver.a
+title: "Versioned constraint A (present in both v1 and v2)"
+intent: "Used to prove pinned-vs-latest bundle retrieval."
+category: organizational
+severity: soft
+guidance:
+  example_compliant: "ok"
+owner: versions
+version: 1.0.0

@@ -1,0 +1,15 @@
+# Lower-precedence (downstream) source, HARD severity, overlapping scope.
+# Strengthening is allowed; the hard constraint outranks the upstream soft one.
+id: team.s3-rule
+title: "Team S3 rule (hard)"
+intent: "Downstream team strengthens the baseline to hard."
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket]
+  environments: [all]
+severity: hard
+guidance:
+  example_compliant: "ok"
+owner: downstream
+version: 1.0.0

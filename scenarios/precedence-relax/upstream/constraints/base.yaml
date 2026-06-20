@@ -1,0 +1,14 @@
+# Higher-precedence source, HARD severity, overlapping scope.
+id: base.s3-hard
+title: "Base S3 rule (hard)"
+intent: "Higher-precedence hard rule that a downstream source illegally relaxes."
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket]
+  environments: [all]
+severity: hard
+guidance:
+  example_compliant: "ok"
+owner: upstream
+version: 1.0.0

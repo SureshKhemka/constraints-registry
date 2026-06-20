@@ -1,0 +1,25 @@
+# Registry configuration (FR-SOURCE-1, FR-ENGINE-5).
+# Source repositories to import (order independent; precedence is explicit).
+sources:
+  - name: platform-security
+    path: sources/platform-security
+    precedence: 100
+  - name: engineering-standards
+    path: sources/engineering-standards
+    precedence: 80
+  - name: architecture-guild
+    path: sources/architecture-guild
+    precedence: 80
+  - name: data-platform
+    path: sources/data-platform
+    precedence: 50
+
+# Engine adapters, discovered by dotted import path at runtime (FR-ENGINE-2/5).
+# Adding an engine is a config edit + a new adapter module; no core changes.
+engines:
+  - name: opa
+    adapter: "cregistry.engine.adapters.opa:OpaAdapter"
+  - name: conftest
+    adapter: "cregistry.engine.adapters.conftest:ConftestAdapter"
+
+precedence_policy: default

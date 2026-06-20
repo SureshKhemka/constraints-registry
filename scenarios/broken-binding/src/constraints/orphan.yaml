@@ -1,0 +1,17 @@
+# A constraint whose enforcement binding references a policy that does not exist.
+# The integrity check must flag this as a broken/orphaned binding (FR-INTEGRITY-2,
+# VH-INTEGRITY-2).
+id: broken.orphan-binding
+title: "Constraint with an unresolved policy binding"
+intent: "Used by the harness to prove broken-binding detection."
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket]
+severity: hard
+enforcement:
+  - { engine: opa, policy: policies/this_policy_does_not_exist.rego }
+guidance:
+  example_compliant: "ok"
+owner: broken-binding
+version: 1.0.0

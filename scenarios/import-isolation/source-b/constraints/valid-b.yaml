@@ -1,0 +1,9 @@
+id: ok.b
+title: "Valid constraint B"
+intent: "A valid constraint in source-b; must import despite the sibling bad file."
+category: organizational
+severity: soft
+guidance:
+  example_compliant: "ok"
+owner: team-b
+version: 1.0.0

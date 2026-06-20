@@ -1,0 +1,25 @@
+# FR-VERSION-4: a deprecated constraint with a successor reference. Still
+# importable and queryable, but flagged deprecated in responses (VH-VERSION-2).
+id: legacy.s3-acl
+title: "Legacy S3 ACL guidance (superseded)"
+intent: >
+  Older guidance about S3 ACL hardening, kept for historical lookups. Superseded
+  by the platform-security public-access constraint.
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket]
+  environments: [all]
+  # Distinct repo tag so this historical guidance does not overlap (and thus does
+  # not conflict with) platform-security's active hard S3 constraints.
+  repos: ["tag:legacy"]
+severity: soft
+guidance:
+  dont:
+    - "Do not rely on per-object ACLs for access control"
+  example_compliant: |
+    {"resources": {"aws_s3_bucket": {"data": {"acl": "private"}}}}
+owner: data-platform
+version: 2.0.0
+deprecated: true
+successor: platform-security/aws.s3.no-public-access

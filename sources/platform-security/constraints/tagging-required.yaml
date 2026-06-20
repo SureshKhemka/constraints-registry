@@ -1,0 +1,25 @@
+# FR-CONSTRAINT-1: infrastructure, advisory-by-no-binding.
+# Shares the bare id "tagging.required" with data-platform's constraint but a
+# DIFFERENT scope, demonstrating namespaced coexistence (FR-NAMESPACE-1) without
+# a precedence conflict.
+id: tagging.required
+title: "AWS resources must carry ownership tags"
+intent: >
+  Cost allocation and incident routing depend on every resource carrying an
+  owner and cost-center tag.
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket, aws_dynamodb_table]
+  environments: [all]
+  repos: ["tag:data-plane"]
+severity: soft
+guidance:
+  do:
+    - "Tag every resource with owner and cost-center"
+  dont:
+    - "Do not ship untagged resources to shared accounts"
+  example_compliant: |
+    {"tags": {"owner": "team-x", "cost-center": "cc-1234"}}
+owner: platform-security
+version: 1.0.0

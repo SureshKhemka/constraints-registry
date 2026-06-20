@@ -1,0 +1,22 @@
+# FR-NAMESPACE-1: same bare id as platform-security/tagging.required, different
+# source and DIFFERENT scope (gcp) -> coexist under distinct namespaces.
+id: tagging.required
+title: "GCS buckets must carry ownership labels"
+intent: >
+  GCP cost and ownership reporting depends on labels on every storage bucket.
+category: infrastructure
+scope:
+  providers: [gcp]
+  resource_types: [google_storage_bucket]
+  environments: [all]
+  repos: ["tag:analytics"]
+severity: soft
+guidance:
+  do:
+    - "Label every bucket with owner and cost-center"
+  dont:
+    - "Do not create unlabeled buckets"
+  example_compliant: |
+    {"labels": {"owner": "team-y", "cost-center": "cc-9999"}}
+owner: data-platform
+version: 1.0.0

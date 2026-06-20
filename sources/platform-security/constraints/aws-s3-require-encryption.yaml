@@ -1,0 +1,29 @@
+# FR-CONSTRAINT-1: infrastructure, hard, enforced.
+id: aws.s3.require-encryption
+title: "S3 buckets must enable server-side encryption"
+intent: >
+  At-rest encryption is mandatory for all object storage to meet data-protection
+  obligations and reduce blast radius of credential leaks.
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket]
+  environments: [all]
+  repos: ["tag:data-plane"]
+severity: hard
+enforcement:
+  - { engine: opa, policy: policies/s3_encryption.rego }
+guidance:
+  dont:
+    - "Do not create buckets without server-side encryption configured"
+  do:
+    - "Set server_side_encryption with AES256 or aws:kms"
+  example_compliant: |
+    {"resources": {"aws_s3_bucket": {"data": {"sse": "AES256"}}}}
+  example_noncompliant: |
+    {"resources": {"aws_s3_bucket": {"data": {}}}}
+owner: platform-security
+version: 1.1.0
+fixtures:
+  pass: fixtures/s3_encrypted.json
+  fail: fixtures/s3_unencrypted.json

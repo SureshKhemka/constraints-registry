@@ -1,0 +1,71 @@
+"""MCP server (FR-MCP-1/2/3/4).
+
+Exposes the registry as an MCP server over stdio with two tools whose
+input/output schemas form a stable, documented contract (FR-MCP-3):
+
+* ``get_constraints(scope, version?)`` -> scoped constraints (FR-QUERY).
+  Fails open (FR-MCP-4): on any failure returns ``available: false`` with an
+  empty constraint list so the calling agent can proceed unblocked.
+* ``validate(artifact, scope, version?)`` -> validation report (FR-VALIDATE).
+  May surface an explicit error, since it is an active check.
+
+The MCP tools are thin wrappers over ``RegistryService`` (see ``service.py``).
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Any
+
+from mcp.server.fastmcp import FastMCP
+
+from .config import load_config
+from .service import RegistryService, ValidationUnavailable
+
+
+def build_server(service: RegistryService | None = None, config_path: str | None = None) -> FastMCP:
+    if service is None:
+        config_path = config_path or os.environ.get("CREGISTRY_CONFIG", "registry.config.yaml")
+        service = RegistryService.from_config(load_config(config_path))
+
+    mcp = FastMCP("constraint-registry")
+
+    @mcp.tool(
+        description=(
+            "Return engineering constraints relevant to a scope. Inputs: scope "
+            "(providers, resource_types, environments, repos, relationship), "
+            "optional version (bundle id; defaults to latest). Output: {available, "
+            "bundle_id, constraints[]}. Fails open: on any error returns "
+            "available=false with an empty constraints list so you can proceed."
+        )
+    )
+    def get_constraints(scope: dict[str, Any] | None = None, version: str | None = None) -> dict:
+        return service.get_constraints(scope, version)
+
+    @mcp.tool(
+        description=(
+            "Validate a candidate artifact against in-scope constraints by "
+            "delegating to enforcement engines. Inputs: artifact (object), scope, "
+            "optional version. Output: {bundle_id, passed, results[]} where each "
+            "result has constraint, severity, kind, verdict, violations, guidance."
+        )
+    )
+    def validate(
+        artifact: dict[str, Any], scope: dict[str, Any] | None = None, version: str | None = None
+    ) -> dict:
+        try:
+            return service.validate(artifact, scope, version)
+        except ValidationUnavailable as exc:
+            return {"error": str(exc), "bundle_id": None, "passed": False, "results": []}
+
+    return mcp
+
+
+def main(argv: list[str] | None = None) -> int:
+    server = build_server()
+    server.run()  # stdio transport
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

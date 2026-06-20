@@ -1,0 +1,9 @@
+id: ver.b
+title: "Versioned constraint B (added in v2 only)"
+intent: "Distinguishes the v2 bundle from the v1 bundle."
+category: organizational
+severity: soft
+guidance:
+  example_compliant: "ok"
+owner: versions
+version: 1.0.0

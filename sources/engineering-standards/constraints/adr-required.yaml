@@ -1,0 +1,21 @@
+# FR-CONSTRAINT-1: organizational, severity advisory, no binding -> pure
+# advisory guidance surfaced to agents and humans (Acceptance Criteria #1).
+id: org.adr-required
+title: "Significant decisions need an ADR"
+intent: >
+  Architecture Decision Records preserve the rationale behind significant
+  choices so future maintainers understand the tradeoffs.
+category: organizational
+scope:
+  repos: ["tag:service"]
+  environments: [all]
+severity: advisory
+guidance:
+  do:
+    - "Record significant technical decisions as an ADR under docs/adr/"
+  dont:
+    - "Do not make architecture-altering changes with no recorded rationale"
+  example_compliant: |
+    docs/adr/0007-adopt-event-bus.md
+owner: engineering-standards
+version: 1.0.0

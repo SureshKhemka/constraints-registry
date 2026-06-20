@@ -1,0 +1,30 @@
+# FR-CONSTRAINT-1: infrastructure, hard, enforced (FR-ENGINE-4 reference path).
+id: aws.s3.no-public-access
+title: "S3 buckets must not be publicly accessible"
+intent: >
+  Public buckets are the top source of data-exposure incidents. All buckets are
+  private; sharing is via signed URLs or CloudFront OAC.
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket, aws_s3_bucket_public_access_block]
+  environments: [all]
+  repos: ["tag:data-plane"]
+severity: hard
+enforcement:
+  - { engine: opa, policy: policies/s3_public.rego }
+guidance:
+  dont:
+    - "Never set acl = 'public-read' or 'public-read-write'"
+  do:
+    - "Attach an aws_s3_bucket_public_access_block with all four flags true"
+  example_compliant: |
+    {"resources": {"aws_s3_bucket": {"data": {"acl": "private",
+     "public_access_block": true}}}}
+  example_noncompliant: |
+    {"resources": {"aws_s3_bucket": {"data": {"acl": "public-read"}}}}
+owner: platform-security
+version: 1.0.0
+fixtures:
+  pass: fixtures/s3_private.json
+  fail: fixtures/s3_public.json

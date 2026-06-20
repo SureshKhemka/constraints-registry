@@ -1,0 +1,25 @@
+# FR-CONSTRAINT-1: architectural, relationship-style scope, advisory (no
+# binding). This is the spec's illustrative architectural constraint and
+# satisfies Acceptance Criteria #1 (relationship-style + advisory, no binding).
+id: arch.no-sync-cross-domain
+title: "No synchronous calls across domain boundaries"
+intent: >
+  Cross-domain synchronous coupling creates cascading-failure risk and blocks
+  independent deploys. Prefer asynchronous/event-driven integration across
+  domains.
+category: architectural
+scope:
+  relationship:
+    source: { layer: domain-service }
+    target: { layer: domain-service, different_domain: true }
+    interaction: synchronous
+severity: advisory
+guidance:
+  dont:
+    - "Avoid direct synchronous HTTP/gRPC calls from one domain's service into another's"
+  do:
+    - "Emit a domain event and let the consuming domain subscribe"
+  example_compliant: |
+    # Emit a domain event; the consuming domain subscribes.
+owner: architecture-guild
+version: 1.0.0

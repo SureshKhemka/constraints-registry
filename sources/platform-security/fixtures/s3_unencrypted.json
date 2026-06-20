@@ -1,0 +1,7 @@
+{
+  "resources": {
+    "aws_s3_bucket": {
+      "data": { "acl": "private" }
+    }
+  }
+}

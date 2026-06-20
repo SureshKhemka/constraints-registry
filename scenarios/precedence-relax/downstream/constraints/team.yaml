@@ -1,0 +1,16 @@
+# Lower-precedence (downstream) source, SOFT severity, overlapping scope.
+# This RELAXES the upstream hard rule -> unresolvable conflict / import error
+# (FR-NAMESPACE-3, VH-NAMESPACE-2b).
+id: team.s3-soft
+title: "Team S3 rule (soft) — illegal relaxation"
+intent: "Downstream attempts to weaken an upstream hard rule; must be rejected."
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket]
+  environments: [all]
+severity: soft
+guidance:
+  example_compliant: "ok"
+owner: downstream
+version: 1.0.0

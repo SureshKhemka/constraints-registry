@@ -1,0 +1,8 @@
+{
+  "edges": [
+    { "from": "orders-svc", "to": "orders-db",
+      "from_domain": "orders", "to_domain": "orders", "type": "data-access" },
+    { "from": "orders-svc", "to": "billing-api",
+      "from_domain": "orders", "to_domain": "billing", "type": "api-call" }
+  ]
+}

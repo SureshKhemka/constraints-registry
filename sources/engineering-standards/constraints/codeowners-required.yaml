@@ -1,0 +1,20 @@
+# FR-CONSTRAINT-1: organizational, advisory-by-no-binding.
+id: org.codeowners-required
+title: "Every service repo must declare CODEOWNERS"
+intent: >
+  Clear ownership routes reviews and incidents to the right team and prevents
+  unowned code from accumulating.
+category: organizational
+scope:
+  repos: ["tag:service"]
+  environments: [all]
+severity: soft
+guidance:
+  do:
+    - "Add a CODEOWNERS file mapping every top-level path to a team"
+  dont:
+    - "Do not leave directories without an owning team"
+  example_compliant: |
+    /src/  @org/team-payments
+owner: engineering-standards
+version: 1.0.0

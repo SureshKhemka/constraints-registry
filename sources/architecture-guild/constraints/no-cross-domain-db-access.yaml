@@ -1,0 +1,33 @@
+# FR-CONSTRAINT-1: architectural, relationship-style scope, hard, ENFORCED.
+# Demonstrates that relationship constraints can also bind to an engine: the
+# policy inspects an architecture-graph artifact (edges between services).
+id: arch.no-cross-domain-db-access
+title: "Services must not read another domain's database directly"
+intent: >
+  Direct cross-domain database access bypasses domain ownership and ossifies the
+  schema as a shared contract. Integrate through the owning domain's API/events.
+category: architectural
+scope:
+  relationship:
+    source: { layer: domain-service }
+    target: { layer: database, different_domain: true }
+    interaction: data-access
+severity: hard
+enforcement:
+  - { engine: opa, policy: policies/arch_db.rego }
+guidance:
+  dont:
+    - "Do not connect a service to a database owned by another domain"
+  do:
+    - "Call the owning domain's API or subscribe to its events"
+  example_compliant: |
+    {"edges": [{"from": "orders-svc", "to": "orders-db",
+     "from_domain": "orders", "to_domain": "orders", "type": "data-access"}]}
+  example_noncompliant: |
+    {"edges": [{"from": "orders-svc", "to": "billing-db",
+     "from_domain": "orders", "to_domain": "billing", "type": "data-access"}]}
+owner: architecture-guild
+version: 1.0.0
+fixtures:
+  pass: fixtures/arch_ok.json
+  fail: fixtures/arch_violation.json

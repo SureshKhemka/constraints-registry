@@ -1,0 +1,15 @@
+# Higher-precedence source, SOFT severity, overlapping scope. The downstream
+# source strengthens this to hard (allowed); hard must outrank (VH-NAMESPACE-2a).
+id: base.s3-rule
+title: "Base S3 rule (soft)"
+intent: "Higher-precedence baseline that a downstream team strengthens."
+category: infrastructure
+scope:
+  providers: [aws]
+  resource_types: [aws_s3_bucket]
+  environments: [all]
+severity: soft
+guidance:
+  example_compliant: "ok"
+owner: upstream
+version: 1.0.0
