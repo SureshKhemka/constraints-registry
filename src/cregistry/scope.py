@@ -80,16 +80,26 @@ def scopes_overlap(a: Scope, b: Scope) -> bool:
 
 
 def _dim_match(constraint_vals: list[str], query_vals: list[str], wildcards: set[str] = frozenset()) -> bool:
-    """A constraint dimension is satisfied by a query when the constraint is
-    unrestricted on it, declares a wildcard, or shares a value with the query.
-    A constraint that *restricts* a dimension the query is silent on is NOT
-    selected — this keeps results scoped (NFR-3)."""
+    """A constraint dimension is satisfied by a query unless the query *supplies*
+    a value that the constraint excludes.
+
+    - constraint unrestricted on this dim -> matches (applies broadly)
+    - constraint declares a wildcard token (e.g. environments ``all``) -> matches
+    - query silent on this dim -> matches ("don't care"; the query simply did not
+      narrow on it). This is what lets an agent ask about ``{providers:[aws],
+      resource_types:[aws_s3_bucket]}`` and still get the data-plane S3
+      constraints without having to guess the exact repo tag.
+    - query supplies values -> require an intersection (else the query's value
+      excludes the constraint).
+
+    NFR-3 still holds: supplying a discriminating selector narrows the result set,
+    and a non-matching value (e.g. ``providers:[gcp]``) excludes a constraint."""
     if not constraint_vals:
         return True
     if wildcards & set(constraint_vals):
         return True
     if not query_vals:
-        return False
+        return True
     return bool(set(constraint_vals) & set(query_vals))
 
 

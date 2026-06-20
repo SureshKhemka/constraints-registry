@@ -109,18 +109,28 @@ def _scoping(config: RegistryConfig) -> CheckResult:
     gcp = _call(server, "get_constraints", {"scope": {"providers": ["gcp"], "resource_types": ["google_storage_bucket"], "environments": ["prod"], "repos": ["tag:analytics"]}})
     gcp_ids = {c["constraint"] for c in gcp["constraints"]}
 
+    # Don't-care semantics: an omitted dimension (no repos here) must NOT zero out
+    # results — the relevant S3 constraints still come back.
+    natural = _call(server, "get_constraints", {"scope": {"providers": ["aws"], "resource_types": ["aws_s3_bucket"]}})
+    natural_ids = {c["constraint"] for c in natural["constraints"]}
+    omitted_dim_ok = {
+        "platform-security/aws.s3.no-public-access",
+        "platform-security/aws.s3.require-encryption",
+    } <= natural_ids and "data-platform/tagging.required" not in natural_ids
+
     scoped_ok = 0 < len(aws_ids) < total
     no_gcp_in_aws = "data-platform/tagging.required" not in aws_ids
     gcp_scoped = gcp_ids == {"data-platform/tagging.required"}
 
-    if scoped_ok and no_gcp_in_aws and gcp_scoped:
+    if scoped_ok and no_gcp_in_aws and gcp_scoped and omitted_dim_ok:
         return CheckResult.ok(
             SECTION, "VH-MCP-2",
-            f"scoped query returns {len(aws_ids)} of {total}; never the full catalog",
+            f"scoped query returns {len(aws_ids)} of {total}; omitted dims are don't-care; never the full catalog",
         )
     return CheckResult.fail(
         SECTION, "VH-MCP-2", "scoping check failed",
-        details=[{"total": total, "aws": sorted(aws_ids), "gcp": sorted(gcp_ids)}],
+        details=[{"total": total, "aws": sorted(aws_ids), "gcp": sorted(gcp_ids),
+                  "natural": sorted(natural_ids), "omitted_dim_ok": omitted_dim_ok}],
     )
 
 
