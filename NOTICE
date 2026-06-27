@@ -1,0 +1,21 @@
+Constraint Registry
+Copyright 2026 Suresh Khemka and Constraint Registry contributors
+
+This product includes software developed by the Constraint Registry contributors.
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file for details.
+
+---
+
+This project integrates with, but does not bundle, the following external
+enforcement engines, each distributed under its own license:
+
+  - Open Policy Agent (OPA)  — Apache-2.0
+  - Conftest                 — Apache-2.0
+  - Checkov                  — Apache-2.0
+  - Semgrep (OSS)            — LGPL-2.1
+
+The `semgrep` Python package is declared as a runtime dependency; all other
+engines are invoked as external binaries that the operator installs separately.
+Constraint stubs produced by the catalog importers carry provenance metadata
+(including upstream license) so downstream consumers can honor those licenses.

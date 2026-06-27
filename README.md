@@ -1,10 +1,16 @@
 # Constraint Registry
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+[![CI](https://github.com/SureshKhemka/constraints-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/SureshKhemka/constraints-registry/actions/workflows/ci.yml)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 A single, queryable source of engineering **constraints** (infrastructure,
 organizational, architectural) that coding agents (Claude Code, Cursor, Codex, …)
 consult at code-generation time, exposed over an **MCP server**. It does **not**
 enforce constraints itself — it provides guidance to agents and delegates
-deterministic validation to existing enforcement engines (OPA / Conftest).
+deterministic validation to existing enforcement engines (**OPA**, **Conftest**,
+**Checkov**, **Semgrep**).
 
 Constraints are authored in source repos, aggregated into an immutable, versioned
 **bundle**, and served over MCP so an agent can:
@@ -29,6 +35,8 @@ Constraints are authored in source repos, aggregated into an immutable, versione
 - [Validation harness](#validation-harness)
 - [Adding an enforcement engine](#adding-an-enforcement-engine)
 - [Repository layout](#repository-layout)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -42,9 +50,15 @@ Constraints are authored in source repos, aggregated into an immutable, versione
 - **Precedence & anti-drift** — a configurable default policy (hard outranks
   weaker; a downstream source may not relax a higher-precedence rule on the same
   scope); fixture cross-checks keep guidance and enforcement from drifting.
-- **Pluggable engines** — a stable adapter interface; ships a real **OPA** adapter
-  and a real **Conftest** adapter. Adding an engine = one adapter + one config
-  line (see [Adding an enforcement engine](#adding-an-enforcement-engine)).
+- **Pluggable engines** — a stable adapter interface with four real adapters:
+  **OPA** and **Conftest** (Rego policies), **Checkov** (IaC scanning), and
+  **Semgrep** (application source code). SARIF-emitting engines share one
+  normalization seam (`adapters/sarif/`), so adding a new SARIF engine is mostly
+  wiring. Adding an engine = one adapter + one config line (see
+  [Adding an enforcement engine](#adding-an-enforcement-engine)).
+- **Catalog importers** — Checkov and Semgrep ship importers that turn an engine's
+  rule catalog/ruleset into draft constraint **stubs** (with license/source
+  provenance) for a human to enrich — a fast path to bootstrapping a source.
 - **MCP server** — three tools (`describe_scope`, `get_constraints`, `validate`)
   over **stdio** or a shared **HTTP** endpoint. `get_constraints` **fails open**
   so an agent is never blocked.
@@ -61,25 +75,30 @@ Constraints are authored in source repos, aggregated into an immutable, versione
 |---|---|---|
 | **Python ≥ 3.11** | yes | the package targets 3.11+ |
 | **[uv](https://docs.astral.sh/uv/)** | yes | manages the venv and runs entry points |
-| **[OPA](https://www.openpolicyagent.org/docs/latest/#running-opa)** (`opa`) | for `validate` / fixture cross-checks | the reference enforcement engine |
-| **[Conftest](https://www.conftest.dev/install/)** (`conftest`) | optional | second engine; its harness check SKIPs if absent |
+| **[OPA](https://www.openpolicyagent.org/docs/latest/#running-opa)** (`opa`) | for Rego `validate` / fixture cross-checks | the reference enforcement engine |
+| **[Conftest](https://www.conftest.dev/install/)** (`conftest`) | optional | second Rego engine; its checks SKIP if absent |
+| **[Checkov](https://www.checkov.io/2.Basics/Installing%20Checkov.html)** (`checkov`) | optional | IaC scanning engine; its checks SKIP if absent |
+| **[Semgrep](https://semgrep.dev/docs/getting-started/)** (`semgrep`) | bundled | source-code engine; installed automatically by `uv sync` |
 
-Install the engines on macOS:
+Install the external engines on macOS:
 ```bash
-brew install opa conftest
+brew install opa conftest checkov   # semgrep is installed by `uv sync`
 ```
-The registry and the `get_constraints`/`describe_scope` guidance work without any
-engine; an engine is only needed to run `validate` and the fixture cross-checks.
+Each engine is **optional** and independent: any test or harness check whose
+engine binary is not on `PATH` is **skipped**, not failed. The registry and the
+`get_constraints`/`describe_scope` guidance work without any engine at all — an
+engine is only needed to run `validate` and the fixture cross-checks for
+constraints bound to it.
 
 ---
 
 ## Quick start
 
 ```bash
-git clone https://github.com/SureshKhemka/constraints-registry-mcp.git
-cd constraints-registry-mcp
+git clone https://github.com/SureshKhemka/constraints-registry.git
+cd constraints-registry
 
-uv sync                      # create the venv + install deps
+uv sync                      # create the venv + install deps (incl. semgrep)
 
 uv run cregistry-harness     # run the validation harness against the bundled samples
 ```
@@ -174,6 +193,8 @@ sources:
 engines:
   - { name: opa,      adapter: "cregistry.engine.adapters.opa:OpaAdapter" }
   - { name: conftest, adapter: "cregistry.engine.adapters.conftest:ConftestAdapter" }
+  - { name: checkov,  adapter: "cregistry.engine.adapters.checkov:CheckovAdapter", options: { min_level: warning } }
+  - { name: semgrep,  adapter: "cregistry.engine.adapters.semgrep:SemgrepAdapter", options: { min_level: warning } }
 precedence_policy: default
 ```
 
@@ -275,10 +296,40 @@ src/cregistry/
   integrity.py        fixture cross-check / anti-drift
   service.py          transport-independent service (+ hot reload)
   mcp_server.py       MCP server (stdio / http) + CLI
-  engine/             stable engine interface, registry, adapters (opa, conftest)
+  engine/             stable engine interface, registry, and adapters:
+    adapters/opa, adapters/conftest, adapters/checkov, adapters/semgrep
+    adapters/sarif    shared SARIF normalization seam (used by checkov + semgrep)
   harness/            the validation harness (checks/*)
 sources/              bundled sample source repos (constraints, policies, fixtures)
 scenarios/            self-contained fixtures for harness edge cases
+tests/                pytest suite: adapter conformance, fixtures, import, e2e
 docs/                 RUNNING.md, MCP_CONTRACT.md, ADDING_AN_ENGINE.md
 deploy/               launchd template for auto-starting the HTTP server
+CONTRACTS.md          the frozen engine-adapter seam new adapters code against
 ```
+
+Run the adapter test suite directly with `uv run pytest`.
+
+---
+
+## Contributing
+
+Contributions are very welcome — bug reports, new **engine adapters**, constraint
+sources, and docs. Adding an engine is intentionally small: one adapter module
+plus one config line, with no changes to the schema, importer, MCP server, or
+harness.
+
+- Read **[CONTRIBUTING.md](CONTRIBUTING.md)** for dev setup, conventions, and the
+  engine-adapter checklist.
+- Be a good neighbor — see the **[Code of Conduct](CODE_OF_CONDUCT.md)**.
+- Found a vulnerability? Report it privately per **[SECURITY.md](SECURITY.md)**.
+
+Before opening a PR, make sure `uv run pytest` and `uv run cregistry-harness` are
+green; CI runs both on every pull request.
+
+---
+
+## License
+
+Licensed under the **[Apache License 2.0](LICENSE)**. See [NOTICE](NOTICE) for
+attribution and the licenses of the external engines this project integrates with.
