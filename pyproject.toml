@@ -4,12 +4,33 @@ version = "0.0.0"
 description = "Constraint Registry V0 — a queryable source of engineering constraints exposed over MCP."
 readme = "README.md"
 requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Suresh Khemka", email = "sureshkhemka@gmail.com" }]
+keywords = [
+    "mcp", "constraints", "policy-as-code", "governance", "coding-agents",
+    "opa", "conftest", "checkov", "semgrep", "sarif",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Security",
+]
 dependencies = [
     "pydantic>=2.6",
     "pyyaml>=6.0",
     "mcp>=1.2",
     "semgrep>=1.168.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/SureshKhemka/constraints-registry"
+Repository = "https://github.com/SureshKhemka/constraints-registry"
+Issues = "https://github.com/SureshKhemka/constraints-registry/issues"
 
 [project.scripts]
 # Validation harness (Section 7). Exits non-zero on any failure (VH-OUTPUT-1).

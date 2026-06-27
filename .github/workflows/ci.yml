@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      # Engine binaries are installed best-effort: the test suite and harness
+      # SKIP (not fail) any check whose engine binary is absent, so a transient
+      # download failure never reds the build — it only reduces coverage.
+      - name: Install OPA
+        continue-on-error: true
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/opa \
+            https://openpolicyagent.org/downloads/latest/opa_linux_amd64_static
+          sudo chmod +x /usr/local/bin/opa
+          opa version
+
+      - name: Install Conftest
+        continue-on-error: true
+        run: |
+          VER="0.56.0"
+          curl -fsSL "https://github.com/open-policy-agent/conftest/releases/download/v${VER}/conftest_${VER}_Linux_x86_64.tar.gz" \
+            | tar -xz -C /tmp conftest
+          sudo mv /tmp/conftest /usr/local/bin/conftest
+          conftest --version
+
+      - name: Install Checkov
+        continue-on-error: true
+        run: |
+          uv tool install checkov
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # semgrep is a declared project dependency, installed by `uv sync`, and is
+      # therefore always available on PATH inside `uv run`.
+
+      - name: Run test suite
+        run: uv run pytest -q
+
+      - name: Run validation harness
+        run: uv run cregistry-harness
